@@ -5,28 +5,27 @@ import java.net.*;
 import java.io.*;
 import java.lang.ProcessBuilder.Redirect;
 
-public class TalkClient extends Thread{
+public class TalkClient extends Thread {
     private String ip;
     private int port;
     private ClientWin win;
+
     @Override
     public void run() {
         try (Socket socket = new Socket(ip, port)) {
-            BufferedReader sin = new BufferedReader(new InputStreamReader(System.in));
             PrintWriter os = new PrintWriter(socket.getOutputStream());
             BufferedReader is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("client ready!");
             System.out.print("send: ");
-            String readline;
-            readline = sin.readLine();
-            while (!readline.equalsIgnoreCase("bye")) {
-                os.println(readline);
+            String text = win.getText();
+            while (!text.equalsIgnoreCase("bye")) {
+                os.println(text);
                 os.flush();
                 String comments = is.readLine();
                 System.out.println("From Sever: " + comments);
                 win.loadComments(comments);
                 System.out.print("send: ");
-                readline = sin.readLine();
+                text = win.getText();
             }
             os.close();
             is.close();
@@ -46,6 +45,7 @@ public class TalkClient extends Thread{
         this.port = 4700;
         win = null;
     }
+
     public static void main(String[] args) {
         new TalkClient().start();
     }

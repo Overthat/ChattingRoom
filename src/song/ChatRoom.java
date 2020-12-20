@@ -21,8 +21,9 @@ public class ChatRoom {
 
 class ClientWin extends JFrame {
     public String name;
+    public String text;
     private ClientLoginDia dia;
-    private TalkClient client;
+    private transient TalkClient client;
     public JTextArea inputText;
     public JTextArea outputText;
     public JMenu menu2;
@@ -31,7 +32,7 @@ class ClientWin extends JFrame {
         dia = new ClientLoginDia(this);
         // 设置窗口
         setBounds(400, 300, 400, 400);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("简易聊天室");
         Container contentPane = getContentPane();
         contentPane.setLayout(new BorderLayout());
@@ -72,8 +73,9 @@ class ClientWin extends JFrame {
                 Calendar time = Calendar.getInstance();
                 String t = String.format("%tT", time);
                 if (inputText.getText().length() != 0) {
-                    outputText.append("QAQ: " + t + "\n" + inputText.getText() + "\n");
+                    setText(name + t + "\n" + inputText.getText() + "\n");
                     inputText.setText("");
+                    myNotify();
                 }
             }
         });
@@ -94,14 +96,34 @@ class ClientWin extends JFrame {
         client.start();
     }
 
-    // 从服务端加载消息
+    // 从客户端加载消息
     public void loadComments(String s) {
         outputText.append(name + " :" + s + "\n");
     }
-    public void setMyName(String name){
+
+    // 设置name
+    public void setMyName(String name) {
         this.name = name;
     }
 
+    // 设置text
+    private void setText(String text) {
+        this.text = text;
+    }
+
+    public synchronized String getText() throws InterruptedException{
+            while (true) {
+                if (text != null && !text.equals("")) {
+                    break;
+                }
+                wait();
+            }
+        return text;
+    }
+
+    private synchronized void myNotify(){
+        notify();
+    }
 }
 
 class ClientLoginDia extends JDialog {
