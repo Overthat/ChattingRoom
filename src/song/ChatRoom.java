@@ -111,17 +111,19 @@ class ClientWin extends JFrame {
         this.text = text;
     }
 
-    public synchronized String getText() throws InterruptedException{
-            while (true) {
-                if (text != null && !text.equals("")) {
-                    break;
-                }
-                wait();
+    public synchronized String getText() throws InterruptedException {
+        while (true) {
+            if (text != null && !text.equals("")) {
+                break;
             }
-        return text;
+            wait();
+        }
+        String msg = text;
+        text = null;
+        return msg;
     }
 
-    private synchronized void myNotify(){
+    private synchronized void myNotify() {
         notify();
     }
 }

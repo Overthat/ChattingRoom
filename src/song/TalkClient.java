@@ -1,9 +1,12 @@
 package song;
 
-import java.net.*;
-
-import java.io.*;
-import java.lang.ProcessBuilder.Redirect;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Scanner;
 
 public class TalkClient extends Thread {
     private String ip;
@@ -12,27 +15,20 @@ public class TalkClient extends Thread {
 
     @Override
     public void run() {
-        try (Socket socket = new Socket(ip, port)) {
-            PrintWriter os = new PrintWriter(socket.getOutputStream());
-            BufferedReader is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            System.out.println("client ready!");
-            System.out.print("send: ");
-            String text = win.getText();
-            while (!text.equalsIgnoreCase("bye")) {
-                os.println(text);
-                os.flush();
-                String comments = is.readLine();
-                System.out.println("From Sever: " + comments);
-                win.loadComments(comments);
-                System.out.print("send: ");
-                text = win.getText();
-            }
-            os.close();
-            is.close();
-        } catch (Exception e) {
-            System.out.println("Error" + e);
-        }
-    }
+        try {
+            Socket s = new Socket(ip, port);
+			// 启动发送消息线程
+			new ClientSendThread(s, win).start();
+			// 启动接受消息线程
+			new ClientReceiveThread(s, win).start();
+
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();}
+		}
 
     public TalkClient(String ip, int port, ClientWin win) {
         this.ip = ip;
@@ -50,4 +46,56 @@ public class TalkClient extends Thread {
         new TalkClient().start();
     }
 
+}
+
+class ClientReceiveThread extends Thread {
+ 
+    private Socket s;
+    private ClientWin win;
+ 
+    public ClientReceiveThread(Socket s, ClientWin win) {
+        this.s = s;
+        this.win = win;
+    }
+ 
+    public void run() {
+        try {
+        	// Thread.currentThread().setName("");
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+            while (true) {
+                String msg = dis.readUTF();
+                win.loadComments(msg);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+ 
+    }
+}
+
+class ClientSendThread extends Thread {
+
+    private Socket s;
+    private ClientWin win;
+
+    public ClientSendThread(Socket s, ClientWin win) {
+        this.s = s;
+        this.win = win;
+    }
+
+    public void run() {
+        try {
+            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+
+            while (true) {
+                String str = win.getText();
+                dos.writeUTF(str);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }

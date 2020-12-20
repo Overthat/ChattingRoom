@@ -1,8 +1,13 @@
 package song;
 
-import java.net.*;
-import java.util.concurrent.*;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MultiTalkServer {
     static int clientnum = 0;
@@ -20,12 +25,12 @@ public class MultiTalkServer {
         ExecutorService threadPool = Executors.newFixedThreadPool(10);
         while (listening) {
             try {
-                ServerThread st = new ServerThread(serverSocket.accept(), clientnum);
-                threadPool.submit(st);
+                Socket s = serverSocket.accept();
+                // ServerThread st = new ServerThread(serverSocket.accept(), clientnum);
+                threadPool.submit(new ServerReceiveThread(s));
+                threadPool.submit(new ServerSendThread(s));
                 System.out.printf("client-%d ready!%n", clientnum+1);
-            } catch (IOException e) {
-
-            }
+            } catch (IOException e) {}
             clientnum++;
         }
         try {
@@ -36,35 +41,68 @@ public class MultiTalkServer {
     }
 }
 
-class ServerThread extends Thread {
-    Socket socket = null;
-    int clientnum;
+// class ServerThread implements Runnable {
 
-    public ServerThread(Socket socket, int num) {
-        this.socket = socket;
-        clientnum = num + 1;
+//     Socket socket = null;
+//     int clientnum;
+
+//     public ServerThread(Socket socket, int num) {
+//         this.socket = socket;
+//         clientnum = num + 1;
+//     }
+
+//     @Override
+//     public void run() {
+//         //
+//     }
+// }
+
+class ServerReceiveThread implements Runnable {
+ 
+    private Socket s;
+ 
+    public ServerReceiveThread(Socket s) {
+        this.s = s;
     }
-
+ 
+    @Override
     public void run() {
         try {
-            String line;
-            BufferedReader is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter os = new PrintWriter(socket.getOutputStream());
-            BufferedReader sin = new BufferedReader(new InputStreamReader(System.in));
-            System.out.println("Client-" + clientnum + ": " + is.readLine());
-            line = sin.readLine();
-            while (!line.equalsIgnoreCase("bye")) {
-                os.println(line);
-                os.flush();
-                System.out.println("Client-" + clientnum + ": " + is.readLine());
-                line = sin.readLine();
+        	// Thread.currentThread().setName("");
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+
+            while (true) {
+                String msg = dis.readUTF();
+                System.out.println("recv: " + msg);
             }
-            System.out.printf("clinet-%d quit.%n", clientnum);
-            os.close();
-            is.close();
-            socket.close();
-        } catch (Exception e) {
-            System.out.println("Error" + e);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+ 
+    }
+ 
+}
+
+class ServerSendThread implements Runnable {
+
+    private Socket s;
+
+    public ServerSendThread(Socket s) {
+        this.s = s;
+    }
+
+    @Override
+    public void run() {
+        try {
+            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+
+            while (true) {
+                Scanner sc = new Scanner(System.in);
+                String str = sc.nextLine();
+                dos.writeUTF(str);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
