@@ -1,7 +1,7 @@
 package song;
 
 import java.net.*;
-
+import java.util.concurrent.*;
 import java.io.*;
 
 public class MultiTalkServer {
@@ -17,9 +17,11 @@ public class MultiTalkServer {
             System.exit(-1);
         }
         System.out.println("Server is running!");
+        ExecutorService threadPool = Executors.newFixedThreadPool(10);
         while (listening) {
             try {
-                new ServerThread(serverSocket.accept(), clientnum).start();
+                ServerThread st = new ServerThread(serverSocket.accept(), clientnum);
+                threadPool.submit(st);
                 System.out.printf("client-%d ready!%n", clientnum+1);
             } catch (IOException e) {
 

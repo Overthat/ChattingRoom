@@ -5,10 +5,6 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import java.io.*;
-
-import java.util.EventListener;
-
 import java.util.*;
 
 public class ChatRoom {
@@ -20,12 +16,16 @@ public class ChatRoom {
     public static void main(String[] args) {
         System.out.println("欢迎进入简易聊天室!");
         var cw = new ClientWin();
-        cw.loadNetClient();
     }
 }
 
 class ClientWin extends JFrame {
+    public String name;
     private ClientLoginDia dia;
+    private TalkClient client;
+    public JTextArea inputText;
+    public JTextArea outputText;
+    public JMenu menu2;
 
     public ClientWin() {
         dia = new ClientLoginDia(this);
@@ -41,7 +41,7 @@ class ClientWin extends JFrame {
         setJMenuBar(menubar);
         JMenu menu1 = new JMenu("聊天记录");
         menubar.add(menu1);
-        JMenu menu2 = new JMenu("登录");
+        menu2 = new JMenu("登录");
         menubar.add(menu2);
         menu2.addMenuListener(new MenuListener() {
             @Override
@@ -63,8 +63,9 @@ class ClientWin extends JFrame {
         menu1.add(item2);
 
         // 设置聊天框
-        var inputText = new JTextArea(10, 20);
-        var outputText = new JTextArea(10, 20);
+        inputText = new JTextArea(10, 20);
+        outputText = new JTextArea(10, 20);
+        outputText.setEditable(false);
         JButton button = new JButton("发送");
         button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
@@ -88,43 +89,52 @@ class ClientWin extends JFrame {
     }
 
     // 加载网络通信客户端
-    public void loadNetClient() {
-        BufferedReader sin = new BufferedReader(new InputStreamReader(System.in))
-        String a = sin;
-        String b = "";
-        System.out.println(a + b);
-            
-        }
+    public void loadNetClient(String ip, int port) {
+        client = new TalkClient(ip, port, this);
+        client.start();
+    }
 
-// client = new TalkClient(dia.getIp(), dia.getPort());
-}}
+    // 从服务端加载消息
+    public void loadComments(String s) {
+        outputText.append(name + " :" + s + "\n");
+    }
+    public void setMyName(String name){
+        this.name = name;
+    }
+
+}
 
 class ClientLoginDia extends JDialog {
 
-    public ClientLoginDia(JFrame jFrame) {
+    public ClientLoginDia(ClientWin jFrame) {
         super(jFrame, "连接至聊天室", true);
         Container container = getContentPane();
-        var tf1 = new JTextField("请输入ip地址");
-        var tf2 = new JTextField("请输入端口");
+        var tf1 = new JTextField(ChatRoom.IP2);
+        var tf2 = new JTextField(String.valueOf(ChatRoom.PORT));
+        var tf3 = new JTextField("your name");
         tf1.setBackground(Color.lightGray);
         tf1.addMouseListener(new MyMouseListener());
         tf2.setBackground(Color.lightGray);
         tf2.addMouseListener(new MyMouseListener());
+        tf3.setBackground(Color.lightGray);
+        tf3.addMouseListener(new MyMouseListener());
         var panel = new JPanel();
-        panel.setLayout(new GridLayout(1, 2));
+        panel.setLayout(new GridLayout(1, 3));
         panel.add(tf1);
         panel.add(tf2);
+        panel.add(tf3);
         var b = new JButton("连接");
         b.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                while (true) {
-                    if (tf1.getText() != null && tf2.getText() != null) {
-                        System.out.println(tf1.getText());
-                        System.out.println(Integer.parseInt(tf2.getText()));
-                        setVisible(false);
-                        break;
-                    }
+                String s1 = tf1.getText();
+                String s2 = tf2.getText();
+                String s3 = tf3.getText();
+                if (!s1.equals("") && !s2.equals("") && !s3.equals("")) {
+                    jFrame.setMyName(s3);
+                    jFrame.menu2.setEnabled(false);
+                    jFrame.loadNetClient(s1, Integer.parseInt(s2));
+                    setVisible(false);
                 }
             }
         });
