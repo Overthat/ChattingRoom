@@ -63,6 +63,8 @@ class ClientReceiveThread extends Thread {
         	// Thread.currentThread().setName("");
             DataInputStream dis = new DataInputStream(s.getInputStream());
             while (true) {
+                if (win == null)
+                    break;
                 String msg = dis.readUTF();
                 win.loadComments(msg);
             }
@@ -88,6 +90,8 @@ class ClientSendThread extends Thread {
             DataOutputStream dos = new DataOutputStream(s.getOutputStream());
 
             while (true) {
+                if (win == null)
+                    break;
                 String str = win.getText();
                 dos.writeUTF(str);
             }

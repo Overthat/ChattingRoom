@@ -2,6 +2,17 @@ package song;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -24,9 +35,13 @@ class ClientWin extends JFrame {
     public String text;
     private ClientLoginDia dia;
     private transient TalkClient client;
+    private FileDialog fd;
+    private FileDialog fw;
     public JTextArea inputText;
     public JTextArea outputText;
+    public JMenu menu1;
     public JMenu menu2;
+    public JMenu menu3;
 
     public ClientWin() {
         dia = new ClientLoginDia(this);
@@ -40,11 +55,58 @@ class ClientWin extends JFrame {
         // 设置菜单
         JMenuBar menubar = new JMenuBar();
         setJMenuBar(menubar);
-        JMenu menu1 = new JMenu("聊天记录");
+        menu1 = new JMenu("读取聊天记录");
         menubar.add(menu1);
-        menu2 = new JMenu("登录");
+        fd = new FileDialog(this, "open", FileDialog.LOAD);
+        menu1.addMenuListener(new MenuListener() {
+            @Override
+            public void menuSelected(MenuEvent e) {
+                fd.setVisible(true);
+                try(BufferedReader f = new BufferedReader(new FileReader(fd.getDirectory() + fd.getFile()))){
+                    String line;
+                    outputText.setText("");
+                    while((line=f.readLine()) != null){
+                        outputText.append(line + "\n");
+                    }
+                } catch (IOException ie) {
+                    // Todo
+                }
+            }
+
+            public void menuCanceled(MenuEvent e) {
+                // pass
+            }
+
+            public void menuDeselected(MenuEvent e) {
+                // pass
+            }
+        });
+
+        menu2 = new JMenu("保存聊天记录");
         menubar.add(menu2);
+        fw = new FileDialog(this, "save", FileDialog.SAVE);
         menu2.addMenuListener(new MenuListener() {
+            @Override
+            public void menuSelected(MenuEvent e) {
+                fw.setVisible(true);
+                try(BufferedWriter f = new BufferedWriter(new FileWriter(fw.getDirectory() + fw.getFile()))){
+                    f.write(outputText.getText());
+                } catch (IOException ie) {
+                    // Todo
+                }
+            }
+
+            public void menuCanceled(MenuEvent e) {
+                // pass
+            }
+
+            public void menuDeselected(MenuEvent e) {
+                // pass
+            }
+        });
+        menu3 = new JMenu("登录");
+        menubar.add(menu3);
+        menu3.addMenuListener(new MenuListener() {
             @Override
             public void menuSelected(MenuEvent e) {
                 dia.setVisible(true);
@@ -58,15 +120,14 @@ class ClientWin extends JFrame {
                 // pass
             }
         });
-        JMenuItem item1 = new JMenuItem("读取上次聊天记录");
-        menu1.add(item1);
-        JMenuItem item2 = new JMenuItem("保存聊天记录");
-        menu1.add(item2);
+
 
         // 设置聊天框
         inputText = new JTextArea(10, 20);
         outputText = new JTextArea(10, 20);
         outputText.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(outputText, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         JButton button = new JButton("发送");
         button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
@@ -83,7 +144,7 @@ class ClientWin extends JFrame {
         panel.add(inputText);
         panel.setBackground(Color.lightGray);
 
-        contentPane.add(outputText, BorderLayout.NORTH);
+        contentPane.add(scrollPane, BorderLayout.NORTH);
         contentPane.add(panel, BorderLayout.CENTER);
         contentPane.add(button, BorderLayout.SOUTH);
 
@@ -157,7 +218,7 @@ class ClientLoginDia extends JDialog {
                 String s3 = tf3.getText();
                 if (!s1.equals("") && !s2.equals("") && !s3.equals("")) {
                     jFrame.setMyName(s3);
-                    jFrame.menu2.setEnabled(false);
+                    jFrame.menu3.setEnabled(false);
                     jFrame.loadNetClient(s1, Integer.parseInt(s2));
                     setVisible(false);
                 }
