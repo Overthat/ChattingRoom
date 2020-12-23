@@ -73,7 +73,7 @@ class ClientWin extends JFrame {
                 Calendar time = Calendar.getInstance();
                 String t = String.format("%tT", time);
                 if (inputText.getText().length() != 0) {
-                    setText(name + t + "\n" + inputText.getText() + "\n");
+                    setText(name + "@" + t + "\n" + inputText.getText() + "\n");
                     inputText.setText("");
                     myNotify();
                 }
@@ -98,7 +98,8 @@ class ClientWin extends JFrame {
 
     // 从客户端加载消息
     public void loadComments(String s) {
-        outputText.append(name + " :" + s + "\n");
+        // outputText.append(name + " :" + s + "\n");
+        outputText.append(s);
     }
 
     // 设置name
